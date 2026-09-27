@@ -1,0 +1,6 @@
+const API={async get(url){const r=await fetch(url);return r.json()},async post(url,data){const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});return r.json()}};
+function toast(msg){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800)}
+function nav(active){const links=[['/dashboard','Dashboard'],['/students','Students'],['/marks','Marks'],['/attendance','Attendance'],['/analysis','Analysis'],['/reports','Reports']];const el=document.getElementById('nav');if(el)el.innerHTML=links.map(x=>`<a class="${active===x[1].toLowerCase()?'active':''}" href="${x[0]}">${x[1]}</a>`).join('')}
+function layoutTitle(title,subtitle){document.title=title+' | Student Performance Analysis';const t=document.getElementById('pageTitle');if(t)t.textContent=title;const s=document.getElementById('pageSubtitle');if(s)s.textContent=subtitle||''}
+function q(name){return new URLSearchParams(location.search).get(name)}
+function badge(v){let c='';if(v==='At Risk'||v==='Critical'||v==='F')c='danger';else if(v==='Needs Improvement'||v==='D')c='warn';else if(v==='On Track'||v==='Excellent'||v==='A+'||v==='A')c='success';return `<span class="badge ${c}">${v}</span>`}

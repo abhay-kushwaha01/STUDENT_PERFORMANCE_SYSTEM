@@ -1,0 +1,200 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard</title><link rel="stylesheet" href="/css/style.css"></head><body><div class="app"><aside class="sidebar"><div class="brand">SPAS<span>Student Performance Analysis</span></div><nav class="nav" id="nav"></nav></aside><main class="main"><div class="topbar"><div><h1 id="pageTitle" class="page-title"></h1><div id="pageSubtitle" class="muted"></div></div><div class="toolbar" style="margin:0"><button class="btn" onclick="location.href='/students'">+ Add Student</button><button class="btn secondary" onclick="location.href='/analysis'">Analyze Performance</button></div></div><section class="content"><div class="grid cards"><div class="card"><div class="muted">Total Students</div><div id="students" class="kpi">—</div></div><div class="card"><div class="muted">Average Marks</div><div id="marks" class="kpi">—</div></div><div class="card"><div class="muted">Average Attendance</div><div id="attendance" class="kpi">—</div></div><div class="card"><div class="muted">At-Risk Students</div><div id="risk" class="kpi">—</div></div></div><div class="two"><div class="card"><h3>Average Marks by Subject</h3><div id="subjectChart" class="chart"></div></div><div class="card"><h3>Grade Distribution</h3><div id="gradeChart" class="chart"></div></div></div><div class="card" style="margin-top:18px"><div class="toolbar"><h3 style="margin-right:auto">Student Performance</h3><input id="search" class="input" style="max-width:260px" placeholder="Search students"></div><div class="table-wrap"><table class="table"><thead><tr><th>Student</th><th>Department</th><th>Percentage</th><th>Attendance</th><th>Grade</th><th>Status</th></tr></thead><tbody id="studentTable"></tbody></table></div></div></section></main></div><div class="toast" id="toast"></div><script src="/js/app.js"></script>
+<script src="/js/app.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+  function init() {
+    if (typeof window.nav === "function") {
+      window.nav("dashboard");
+    }
+
+    if (typeof window.layoutTitle === "function") {
+      window.layoutTitle(
+        "Dashboard",
+        "Class-level performance overview — live data from the C backend"
+      );
+    }
+
+    const studentCount = $("students");
+    const markAvg = $("marks");
+    const attendanceAvg = $("attendance");
+    const riskCount = $("risk");
+    const subjectChart = $("subjectChart");
+    const gradeChart = $("gradeChart");
+    const studentTable = $("studentTable");
+    const searchBox = $("search");
+
+    function showError(message) {
+      [studentCount, markAvg, attendanceAvg, riskCount].forEach(el => {
+        if (el) el.textContent = "0";
+      });
+
+      if (subjectChart) {
+        subjectChart.innerHTML =
+          '<div class="empty">Unable to load dashboard data.<br><small>' +
+          message.replace(/</g, "&lt;") +
+          '</small></div>';
+      }
+
+      if (gradeChart) {
+        gradeChart.innerHTML =
+          '<div class="empty">Check that the C backend is running and refresh the page.</div>';
+      }
+
+      if (studentTable) {
+        studentTable.innerHTML =
+          '<tr><td colspan="6" class="empty">No dashboard data available.</td></tr>';
+      }
+
+      console.error("Dashboard API error:", message);
+    }
+
+    function renderBars(el, items) {
+      if (!el) return;
+      if (!items || !items.length) {
+        el.innerHTML = '<div class="empty">No data available.</div>';
+        return;
+      }
+
+      const max = Math.max(...items.map(x => Number(x.value) || 0), 1);
+
+      el.innerHTML = items.map(x => {
+        const value = Number(x.value) || 0;
+        const height = Math.max(8, Math.min(100, (value / max) * 100));
+        return `
+          <div class="bar" style="height:${height}%">
+            <span>${value.toFixed(1)}</span>
+            <em>${String(x.label).replace(/</g, "&lt;")}</em>
+          </div>`;
+      }).join("");
+    }
+
+    function renderGradeChart(distribution) {
+      if (!gradeChart) return;
+
+      const items = Object.entries(distribution || {}).map(([label, count]) => ({
+        label,
+        value: Number(count) || 0
+      }));
+
+      if (!items.some(x => x.value > 0)) {
+        gradeChart.innerHTML = '<div class="empty">No grade data available.</div>';
+        return;
+      }
+
+      const max = Math.max(...items.map(x => x.value), 1);
+
+      gradeChart.innerHTML = items.map(x => {
+        const height = Math.max(8, Math.min(100, (x.value / max) * 100));
+        return `
+          <div class="bar" style="height:${height}%">
+            <span>${x.value}</span>
+            <em>${x.label}</em>
+          </div>`;
+      }).join("");
+    }
+
+    function renderStudents(items) {
+      if (!studentTable) return;
+
+      if (!items || !items.length) {
+        studentTable.innerHTML =
+          '<tr><td colspan="6" class="empty">No students found.</td></tr>';
+        return;
+      }
+
+      studentTable.innerHTML = items.map(s => {
+        const pct = Number(s.percentage) || 0;
+        const att = Number(s.attendance) || 0;
+
+        return `
+          <tr onclick="location.href='/student-profile?id=${encodeURIComponent(s.student_id)}'"
+              style="cursor:pointer">
+            <td>
+              <strong>${String(s.name || "").replace(/</g, "&lt;")}</strong><br>
+              <small class="muted">${s.student_id}</small>
+            </td>
+            <td>${String(s.department || "").replace(/</g, "&lt;")}</td>
+            <td>${pct.toFixed(1)}%</td>
+            <td>${att.toFixed(1)}%</td>
+            <td>${typeof window.badge === "function" ? window.badge(s.grade || "-") : (s.grade || "-")}</td>
+            <td>${typeof window.badge === "function" ? window.badge(s.status || "-") : (s.status || "-")}</td>
+          </tr>`;
+      }).join("");
+    }
+
+    let dashboardData = null;
+
+    async function loadDashboard() {
+      try {
+        const response = await fetch("/api/dashboard", {
+          cache: "no-store",
+          headers: { "Accept": "application/json" }
+        });
+
+        const raw = await response.text();
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${raw.slice(0, 200)}`);
+        }
+
+        let data;
+        try {
+          data = JSON.parse(raw);
+        } catch (parseError) {
+          throw new Error("The C backend returned invalid JSON.");
+        }
+
+        if (!data || data.success !== true) {
+          throw new Error(data && data.message ? data.message : "Dashboard data was not returned.");
+        }
+
+        dashboardData = data;
+
+        if (studentCount) studentCount.textContent = data.total_students ?? 0;
+        if (markAvg) markAvg.textContent = `${Number(data.average_marks || 0).toFixed(1)}%`;
+        if (attendanceAvg) attendanceAvg.textContent = `${Number(data.average_attendance || 0).toFixed(1)}%`;
+        if (riskCount) riskCount.textContent = data.at_risk_students ?? 0;
+
+        renderBars(
+          subjectChart,
+          (data.subject_averages || []).map(x => ({
+            label: x.subject || "Subject",
+            value: Number(x.average || 0)
+          }))
+        );
+
+        renderGradeChart(data.grade_distribution || {});
+        renderStudents(data.students || []);
+      } catch (error) {
+        showError(error instanceof Error ? error.message : String(error));
+      }
+    }
+
+    if (searchBox) {
+      searchBox.addEventListener("input", function () {
+        const value = this.value.trim().toLowerCase();
+
+        if (!dashboardData) return;
+
+        const filtered = (dashboardData.students || []).filter(s =>
+          String(s.name || "").toLowerCase().includes(value) ||
+          String(s.department || "").toLowerCase().includes(value) ||
+          String(s.student_id || "").includes(value)
+        );
+
+        renderStudents(filtered);
+      });
+    }
+
+    loadDashboard();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script></body></html>
