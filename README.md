@@ -56,7 +56,7 @@ run.bat
 
 The script creates the `build` folder, compiles the C sources, starts the C server, and opens the dashboard automatically.
 
-Then open:
+Then open: 
 
 `http://localhost:8080` (dashboard)
 
