@@ -50,9 +50,9 @@ Windows: MinGW-w64 GCC and VS Code. Linux/macOS: GCC/Clang with POSIX sockets.
 
 Open the project folder in VS Code terminal and run:
 
-```bat
+'''bat
 run.bat
-```
+'''
 
 The script creates the `build` folder, compiles the C sources, starts the C server, and opens the dashboard automatically.
 
