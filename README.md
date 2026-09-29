@@ -60,7 +60,7 @@ Then open:
 
 `http://localhost:8080` (dashboard)
 
-## Build manually on Windows
+## Build manually in Windows
 
 ```bat
 gcc backend\*.c -std=c99 -Wall -Wextra -O2 -o student_system.exe -lws2_32
