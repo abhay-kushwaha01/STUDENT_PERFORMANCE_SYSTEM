@@ -144,7 +144,7 @@ Open **Students** and click **+ Add Student**. Enter the student details. After 
 The bundled demo dataset contains 40 realistic-looking student records across four engineering departments, eight subjects, varied marks, attendance levels, grades, and at-risk cases so the dashboard is populated on first run.
 
 
-## Dashboard data troubleshooting
+## Dashboard data troubleshoot
 
 The dashboard reads all statistics from `GET /api/dashboard` in the C backend. The page now displays a visible error message instead of silently showing blank KPI cards if the backend or JSON response is unavailable.
 
