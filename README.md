@@ -5,7 +5,7 @@ A professional local web application for managing students, marks, attendance, a
 ## Technology
 - Backend: C99, C standard library, sockets, file handling
 - Frontend: HTML5, CSS3, Vanilla JavaScript
-- Storage: `.dat` files managed by C
+- Storage: `.dat` files managed by 
 - Server: lightweight HTTP server on `localhost:8080`
 - No database, Python, Flask, Node.js, React, PHP, Java, C++, or cloud backend
 
