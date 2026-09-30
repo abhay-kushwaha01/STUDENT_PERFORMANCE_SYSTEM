@@ -5,7 +5,7 @@ A professional local web application for managing students, marks, attendance, a
 ## Technology
 - Backend: C99, C standard library, sockets, file handling
 - Frontend: HTML5, CSS3, Vanilla JavaScript
-- Storage: `.dat` files managed by 
+- Storage: `.dat` files managed by C
 - Server: lightweight HTTP server on `localhost:8080`
 - No database, Python, Flask, Node.js, React, PHP, Java, C++, or cloud backend
 
@@ -144,7 +144,7 @@ Open **Students** and click **+ Add Student**. Enter the student details. After 
 The bundled demo dataset contains 40 realistic-looking student records across four engineering departments, eight subjects, varied marks, attendance levels, grades, and at-risk cases so the dashboard is populated on first run.
 
 
-## Dashboard data troubleshoot
+## Dashboard data troubleshooting
 
 The dashboard reads all statistics from `GET /api/dashboard` in the C backend. The page now displays a visible error message instead of silently showing blank KPI cards if the backend or JSON response is unavailable.
 
